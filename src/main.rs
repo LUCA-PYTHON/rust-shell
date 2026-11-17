@@ -5,4 +5,10 @@ fn main() {
 
     print!("rust-shell> ");
     out.flush().unwrap();
+
+    let mut text = String::new();
+    io::stdin().read_line(&mut text).unwrap();
+
+    let clean = text.trim();
+    println!("You typed: '{}'", clean);
 }
