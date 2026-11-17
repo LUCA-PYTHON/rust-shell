@@ -1,23 +1,22 @@
 use std::io::{self, Write};
 
-fn main()
-{
+fn main() {
     let mut out = io::stdout();
 
-    loop
-    {
+    loop {
         print!("rust-shell> ");
         out.flush().unwrap();
         let mut text = String::new();
-        io::stdin().read_line(&mut text).unwrap();
+        let bytes = io::stdin().read_line(&mut text).unwrap();
+        if bytes == 0 {
+            break;
+        }
 
         let clean = text.trim();
-        if clean.is_empty()
-        {
+        if clean.is_empty() {
             continue;
         }
-        if clean == "exit"
-        {
+        if clean == "exit" {
             break;
         }
         println!("You typed: '{}'", clean);
