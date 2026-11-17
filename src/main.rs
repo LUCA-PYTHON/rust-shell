@@ -1,12 +1,14 @@
 use std::io::{self, Write};
 
-enum Command {
+// Enumeration, Datentyp mit mehreren Varianten eines Werts
+enum Command<'a> {
     Exit,
     Empty,
-    Other,
+    Other(&'a str, &'a [&'a str]),
 }
 
-fn identify(parts: &[&str]) -> Command {
+// Rausfiltern welcher "Command" jetzt ausgeführt wird
+fn identify<'a>(parts: &'a [&'a str]) -> Command<'a> {
     if parts.is_empty() {
         return Command::Empty;
     }
@@ -15,7 +17,7 @@ fn identify(parts: &[&str]) -> Command {
         return Command::Exit;
     }
 
-    Command::Other
+    Command::Other(parts[0], &parts[1..])
 }
 
 fn parse_line(line: &str) -> Vec<&str> {
@@ -39,7 +41,9 @@ fn main() {
         match identify(&parts) {
             Command::Exit => break,
             Command::Empty => continue,
-            Command::Other => println!("Command: {:?}\nArgs: {:?}", parts[0], &parts[1..]),
+            Command::Other(name, args) => {
+                println!("Command: {:?}\nArgs: {:?}", name, args)
+            }
         }
     }
 }
