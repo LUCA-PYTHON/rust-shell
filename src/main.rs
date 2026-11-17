@@ -12,13 +12,14 @@ fn main() {
             break;
         }
 
-        let clean = text.trim();
-        if clean.is_empty() {
+        let line = text.trim();
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if line.is_empty() {
             continue;
         }
-        if clean == "exit" {
+        if line == "exit" {
             break;
         }
-        println!("You typed: '{}'", clean);
+        println!("Command: {:?}\nArgs: {:?}", parts[0], &parts[1..]);
     }
 }
