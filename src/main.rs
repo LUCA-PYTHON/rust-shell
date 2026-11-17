@@ -1,5 +1,23 @@
 use std::io::{self, Write};
 
+enum Command {
+    Exit,
+    Empty,
+    Other,
+}
+
+fn identify(parts: &[&str]) -> Command {
+    if parts.is_empty() {
+        return Command::Empty;
+    }
+
+    if parts[0] == "exit" {
+        return Command::Exit;
+    }
+
+    Command::Other
+}
+
 fn parse_line(line: &str) -> Vec<&str> {
     line.split_whitespace().collect()
 }
@@ -18,12 +36,10 @@ fn main() {
 
         let line = text.trim();
         let parts = parse_line(line);
-        if parts.is_empty() {
-            continue;
+        match identify(&parts) {
+            Command::Exit => break,
+            Command::Empty => continue,
+            Command::Other => println!("Command: {:?}\nArgs: {:?}", parts[0], &parts[1..]),
         }
-        if parts[0] == "exit" {
-            break;
-        }
-        println!("Command: {:?}\nArgs: {:?}", parts[0], &parts[1..]);
     }
 }
