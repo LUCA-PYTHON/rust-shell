@@ -1,5 +1,9 @@
 use std::io::{self, Write};
 
+fn parse_line(line: &str) -> Vec<&str> {
+    line.split_whitespace().collect()
+}
+
 fn main() {
     let mut out = io::stdout();
 
@@ -13,11 +17,11 @@ fn main() {
         }
 
         let line = text.trim();
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if line.is_empty() {
+        let parts = parse_line(line);
+        if parts.is_empty() {
             continue;
         }
-        if line == "exit" {
+        if parts[0] == "exit" {
             break;
         }
         println!("Command: {:?}\nArgs: {:?}", parts[0], &parts[1..]);
