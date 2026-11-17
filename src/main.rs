@@ -1,34 +1,9 @@
 use std::env;
 use std::io::{self, Write};
 
-// Enumeration, Datentyp mit mehreren Varianten eines Werts
-enum Command<'a> {
-    Exit,
-    Empty,
-    Pwd,
-    Other(&'a str, &'a [&'a str]),
-}
+use parser::{identify, parse_line, Command};
 
-// Rausfiltern welcher "Command" jetzt ausgeführt wird
-fn identify<'a>(parts: &'a [&'a str]) -> Command<'a> {
-    if parts.is_empty() {
-        return Command::Empty;
-    }
-
-    if parts[0] == "exit" {
-        return Command::Exit;
-    }
-
-    if parts[0] == "pwd" {
-        return Command::Pwd;
-    }
-
-    Command::Other(parts[0], &parts[1..])
-}
-
-fn parse_line(line: &str) -> Vec<&str> {
-    line.split_whitespace().collect()
-}
+mod parser;
 
 fn main() {
     let mut out = io::stdout();
@@ -48,6 +23,9 @@ fn main() {
         match identify(&parts) {
             Command::Exit => break,
             Command::Empty => continue,
+            Command::Echo(args) => {
+                println!("{}", args.join(" "))
+            }
             Command::Pwd => match env::current_dir() {
                 Ok(path) => println!("{}", path.display()),
                 Err(e) => eprintln!("error: {}", e),
