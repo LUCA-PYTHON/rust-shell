@@ -1,15 +1,22 @@
 use std::env;
 use std::io::{self, Write};
 
-use parser::{identify, parse_line, Command};
+use parser::{Command, identify, parse_line};
 
 mod parser;
+
+fn build_promt() -> String {
+    match env::current_dir() {
+        Ok(path) => format!("rust-shell: <{}>", path.display()),
+        Err(..) => String::from("rust-shell> "),
+    }
+}
 
 fn main() {
     let mut out = io::stdout();
 
     loop {
-        print!("rust-shell> ");
+        print!("{}", build_promt());
         out.flush().unwrap();
         let mut text = String::new();
         let bytes = io::stdin().read_line(&mut text).unwrap();
@@ -29,6 +36,13 @@ fn main() {
             Command::Pwd => match env::current_dir() {
                 Ok(path) => println!("{}", path.display()),
                 Err(e) => eprintln!("error: {}", e),
+            },
+            Command::Cd(args) => match args.first() {
+                Some(path) => match env::set_current_dir(path) {
+                    Ok(()) => {}
+                    Err(e) => eprintln!("cd: {}: {}", path, e),
+                },
+                None => eprintln!("cd: missing argument"),
             },
             Command::Other(name, args) => {
                 println!("Command: {:?}\nArgs: {:?}", name, args)

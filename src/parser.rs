@@ -4,6 +4,7 @@ pub enum Command<'a> {
     Empty,
     Echo(&'a [&'a str]),
     Pwd,
+    Cd(&'a [&'a str]),
     Other(&'a str, &'a [&'a str]),
 }
 
@@ -23,6 +24,10 @@ pub fn identify<'a>(parts: &'a [&'a str]) -> Command<'a> {
 
     if parts[0] == "pwd" {
         return Command::Pwd;
+    }
+
+    if parts[0] == "cd" {
+        return Command::Cd(&parts[1..]);
     }
 
     Command::Other(parts[0], &parts[1..])
