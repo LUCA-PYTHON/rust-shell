@@ -1,9 +1,11 @@
+use std::env;
 use std::io::{self, Write};
 
 // Enumeration, Datentyp mit mehreren Varianten eines Werts
 enum Command<'a> {
     Exit,
     Empty,
+    Pwd,
     Other(&'a str, &'a [&'a str]),
 }
 
@@ -15,6 +17,10 @@ fn identify<'a>(parts: &'a [&'a str]) -> Command<'a> {
 
     if parts[0] == "exit" {
         return Command::Exit;
+    }
+
+    if parts[0] == "pwd" {
+        return Command::Pwd;
     }
 
     Command::Other(parts[0], &parts[1..])
@@ -38,9 +44,14 @@ fn main() {
 
         let line = text.trim();
         let parts = parse_line(line);
+
         match identify(&parts) {
             Command::Exit => break,
             Command::Empty => continue,
+            Command::Pwd => match env::current_dir() {
+                Ok(path) => println!("{}", path.display()),
+                Err(e) => eprintln!("error: {}", e),
+            },
             Command::Other(name, args) => {
                 println!("Command: {:?}\nArgs: {:?}", name, args)
             }
