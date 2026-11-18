@@ -5,6 +5,7 @@ use parser::{Command, identify, parse_line};
 
 mod builtins;
 mod parser;
+mod state;
 
 fn build_promt() -> String {
     match env::current_dir() {
@@ -15,6 +16,8 @@ fn build_promt() -> String {
 
 fn main() {
     let mut out = io::stdout();
+    let state = state::ShellState::new();
+    print!("{:?}", state.get("HOME"));
 
     loop {
         print!("{}", build_promt());
