@@ -1,3 +1,4 @@
+use crate::state::expand;
 use ::std::env;
 use std::io::{self, Write};
 
@@ -17,7 +18,7 @@ fn build_promt() -> String {
 fn main() {
     let mut out = io::stdout();
     let state = state::ShellState::new();
-    print!("{:?}", state.get("HOME"));
+    print!("{}", expand("$HOME", &state));
 
     loop {
         print!("{}", build_promt());

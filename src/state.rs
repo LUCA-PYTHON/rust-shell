@@ -18,3 +18,10 @@ impl ShellState {
         self.vars.insert(name.to_string(), value.to_string());
     }
 }
+
+pub fn expand(word: &str, state: &ShellState) -> String {
+    match word.strip_prefix("$") {
+        Some(name) => state.get(name).cloned().unwrap_or_default(),
+        None => word.to_string(),
+    }
+}
