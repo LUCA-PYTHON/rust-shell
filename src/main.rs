@@ -1,5 +1,5 @@
 use crate::state::expand;
-use ::std::env;
+use std::env;
 use std::io::{self, Write};
 
 use parser::{Command, identify, parse_line};
@@ -10,18 +10,17 @@ mod state;
 
 fn build_promt() -> String {
     match env::current_dir() {
-        Ok(path) => format!("rust-shell: <{}>", path.display()),
-        Err(..) => String::from("rust-shell> "),
+        Ok(path) => format!("rust-shell: {}>", path.display()),
+        Err(..) => String::from("rust-shell>"),
     }
 }
 
 fn main() {
     let mut out = io::stdout();
     let state = state::ShellState::new();
-    print!("{}", expand("$HOME", &state));
 
     loop {
-        print!("{}", build_promt());
+        print!("{} ", build_promt());
         out.flush().unwrap();
         let mut text = String::new();
         let bytes = io::stdin().read_line(&mut text).unwrap();
@@ -31,8 +30,10 @@ fn main() {
 
         let line = text.trim();
         let parts = parse_line(line);
+        let expanded: Vec<String> = parts.iter().map(|w| expand(w, &state)).collect();
+        let refs: Vec<&str> = expanded.iter().map(|s| s.as_str()).collect();
 
-        match identify(&parts) {
+        match identify(&refs) {
             Command::Exit => break,
             Command::Empty => continue,
             Command::Echo(args) => builtins::echo(args),
