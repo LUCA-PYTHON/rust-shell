@@ -35,7 +35,11 @@ fn main() {
             Command::Empty => continue,
             Command::Echo(args) => builtins::echo(args),
             Command::Pwd => builtins::pwd(),
-            Command::Cd(args) => builtins::cd(args),
+            Command::Cd(args) => {
+                if let Err(e) = builtins::cd(args) {
+                    eprintln!("{}", e);
+                }
+            }
             Command::Other(name, args) => {
                 println!("Command: {:?}\nArgs: {:?}", name, args)
             }

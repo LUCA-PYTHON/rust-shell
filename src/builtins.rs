@@ -11,12 +11,12 @@ pub fn pwd() {
     }
 }
 
-pub fn cd(args: &[&str]) {
+pub fn cd(args: &[&str]) -> Result<(), String> {
     match args.first() {
         Some(path) => match env::set_current_dir(path) {
-            Ok(()) => {}
-            Err(e) => eprintln!("cd: {}: {}", path, e),
+            Ok(()) => Ok(()),
+            Err(e) => Err(format!("cd: {}: {}", path, e)),
         },
-        None => eprintln!("cd: missing argument"),
+        None => Err(String::from("cd: missing argument")),
     }
 }

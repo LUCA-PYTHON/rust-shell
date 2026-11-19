@@ -1,4 +1,5 @@
 use rust_shell::parser::{Command, identify};
+use rust_shell::builtins;
 
 #[test]
 fn identifies_exit() {
@@ -16,7 +17,7 @@ fn identifies_pwd() {
 fn identifies_empty() {
     let input: [&str; 0] = [];
     let result = identify(&input);
-    assert!(matches!(result, Command::Empty)); 
+    assert!(matches!(result, Command::Empty));
 }
 
 #[test]
@@ -34,5 +35,17 @@ fn identifies_echo_args() {
 #[test]
 fn identifies_cd() {
     let result = identify(&["cd", "/tmp"]);
-    assert!(matches!(result, Command::Cd(args) if args == ["/tmp"]))
+    assert!(matches!(result, Command::Cd(args) if args == ["/tmp"]));
+}
+
+#[test]
+fn identifies_cd_empty() {
+    let result = identify(&["cd"]);
+    assert!(matches!(result, Command::Cd(args) if args.is_empty()));
+}
+
+#[test]
+fn cd_to_missing_dir_fails() {
+    let result = builtins::cd(&["/notexisting"]);
+    assert!(result.is_err());
 }
