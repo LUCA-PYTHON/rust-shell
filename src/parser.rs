@@ -5,6 +5,7 @@ pub enum Command<'a> {
     Echo(&'a [&'a str]),
     Pwd,
     Cd(&'a [&'a str]),
+    Export(&'a [&'a str]),
     Other(&'a str, &'a [&'a str]),
 }
 
@@ -28,6 +29,10 @@ pub fn identify<'a>(parts: &'a [&'a str]) -> Command<'a> {
 
     if parts[0] == "cd" {
         return Command::Cd(&parts[1..]);
+    }
+
+    if parts[0] == "export" {
+        return Command::Export(&parts[1..]);
     }
 
     Command::Other(parts[0], &parts[1..])

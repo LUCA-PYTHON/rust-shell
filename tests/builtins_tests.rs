@@ -1,5 +1,5 @@
-use rust_shell::parser::{Command, identify};
 use rust_shell::builtins;
+use rust_shell::parser::{Command, identify};
 
 #[test]
 fn identifies_exit() {

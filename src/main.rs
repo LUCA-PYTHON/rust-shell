@@ -14,7 +14,7 @@ fn build_promt() -> String {
 
 fn main() {
     let mut out = io::stdout();
-    let state = ShellState::new();
+    let mut state = ShellState::new();
 
     loop {
         print!("{} ", build_promt());
@@ -37,6 +37,11 @@ fn main() {
             Command::Pwd => builtins::pwd(),
             Command::Cd(args) => {
                 if let Err(e) = builtins::cd(args) {
+                    eprintln!("{}", e);
+                }
+            }
+            Command::Export(args) => {
+                if let Err(e) = builtins::export(args, &mut state) {
                     eprintln!("{}", e);
                 }
             }

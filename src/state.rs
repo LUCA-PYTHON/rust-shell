@@ -19,6 +19,12 @@ impl ShellState {
     }
 }
 
+impl Default for ShellState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // $variable zerlegen und info aus env ziehen
 pub fn expand(word: &str, state: &ShellState) -> String {
     match word.strip_prefix("$") {
