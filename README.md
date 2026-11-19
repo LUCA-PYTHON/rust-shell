@@ -9,8 +9,8 @@ Hier soll ein Terminal in rust enstehen. Vergleich zu [C-Shell](https://github.c
 
 ## Andere Funktionen
 - `""` Erkennung und Verarbeitung
-    - `echo "te    st"` => Ausgabe: "te    st"
-    - `echo te    st    => Ausgabe: "te st"
+    - `echo "te    st"` => Ausgabe: `te    st`
+    - `echo te    st`    => Ausgabe: `te st`
 
 ## Tests
 - `parser_tests`    => Kleiner test des parsers mit `ls -l`
