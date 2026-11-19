@@ -1,12 +1,9 @@
-use crate::state::expand;
+use rust_shell::builtins;
+use rust_shell::parser::{Command, identify, parse_line};
+use rust_shell::state::{ShellState, expand};
+
 use std::env;
 use std::io::{self, Write};
-
-use parser::{Command, identify, parse_line};
-
-mod builtins;
-mod parser;
-mod state;
 
 fn build_promt() -> String {
     match env::current_dir() {
@@ -17,7 +14,7 @@ fn build_promt() -> String {
 
 fn main() {
     let mut out = io::stdout();
-    let state = state::ShellState::new();
+    let state = ShellState::new();
 
     loop {
         print!("{} ", build_promt());

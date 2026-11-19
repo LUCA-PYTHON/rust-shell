@@ -19,6 +19,7 @@ impl ShellState {
     }
 }
 
+// $variable zerlegen und info aus env ziehen
 pub fn expand(word: &str, state: &ShellState) -> String {
     match word.strip_prefix("$") {
         Some(name) => state.get(name).cloned().unwrap_or_default(),

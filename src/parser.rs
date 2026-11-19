@@ -33,6 +33,7 @@ pub fn identify<'a>(parts: &'a [&'a str]) -> Command<'a> {
     Command::Other(parts[0], &parts[1..])
 }
 
+// Eingabe zerlegen und "" erkennen
 pub fn parse_line(line: &str) -> Vec<String> {
     let mut words: Vec<String> = Vec::new();
     let mut current = String::new();
@@ -41,14 +42,12 @@ pub fn parse_line(line: &str) -> Vec<String> {
     for c in line.chars() {
         if c == '"' {
             in_quotes = !in_quotes;
-        }
-        else if c.is_whitespace() && !in_quotes{
+        } else if c.is_whitespace() && !in_quotes {
             if !current.is_empty() {
                 words.push(current.clone());
                 current.clear();
             }
-        }
-        else {
+        } else {
             current.push(c);
         }
     }
