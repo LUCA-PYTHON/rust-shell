@@ -1,4 +1,5 @@
 use rust_shell::builtins;
+use rust_shell::fm;
 use rust_shell::parser::{Command, identify, parse_line};
 use rust_shell::state::{ShellState, expand};
 
@@ -47,6 +48,11 @@ fn main() {
             }
             Command::Env(args) => {
                 if let Err(e) = builtins::env_cmd(args, &state) {
+                    eprintln!("{}", e);
+                }
+            }
+            Command::Fm(args) => {
+                if let Err(e) = fm::run(args) {
                     eprintln!("{}", e);
                 }
             }

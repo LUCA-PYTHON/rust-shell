@@ -46,7 +46,7 @@ pub fn env_cmd(args: &[&str], state: &ShellState) -> Result<(), String> {
         },
         None => {
             for (name, value) in state.all() {
-                println! ("{}={}", name, value);
+                println!("{}={}", name, value);
             }
             Ok(())
         }
