@@ -45,6 +45,12 @@ fn main() {
                     eprintln!("{}", e);
                 }
             }
+            Command::Env(args) => {
+                if let Err(e) = builtins::env_cmd(args, &state) {
+                    eprintln!("{}", e);
+                }
+            }
+            Command::Help => builtins::help(),
             Command::Other(name, args) => {
                 println!("Command: {:?}\nArgs: {:?}", name, args)
             }

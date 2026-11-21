@@ -6,6 +6,8 @@ pub enum Command<'a> {
     Pwd,
     Cd(&'a [&'a str]),
     Export(&'a [&'a str]),
+    Env(&'a [&'a str]),
+    Help,
     Other(&'a str, &'a [&'a str]),
 }
 
@@ -33,6 +35,14 @@ pub fn identify<'a>(parts: &'a [&'a str]) -> Command<'a> {
 
     if parts[0] == "export" {
         return Command::Export(&parts[1..]);
+    }
+
+    if parts[0] == "env" {
+        return Command::Env(&parts[1..]);
+    }
+
+    if parts[0] == "help" || parts[0] == "h" {
+        return Command::Help;
     }
 
     Command::Other(parts[0], &parts[1..])

@@ -26,7 +26,6 @@ pub fn export(args: &[&str], state: &mut ShellState) -> Result<(), String> {
     match args.first() {
         Some(arg) => match arg.split_once('=') {
             Some((name, value)) => {
-                println!("{} und {}", name, value);
                 state.set(name, value);
                 Ok(())
             }
@@ -34,4 +33,31 @@ pub fn export(args: &[&str], state: &mut ShellState) -> Result<(), String> {
         },
         None => Err(String::from("export: missing argument")),
     }
+}
+
+pub fn env_cmd(args: &[&str], state: &ShellState) -> Result<(), String> {
+    match args.first() {
+        Some(name) => match state.get(name) {
+            Some(value) => {
+                println!("{}={}", name, value);
+                Ok(())
+            }
+            None => Err(format!("{}: not set", name)),
+        },
+        None => {
+            for (name, value) in state.all() {
+                println! ("{}={}", name, value);
+            }
+            Ok(())
+        }
+    }
+}
+
+pub fn help() {
+    println!("Info Menu for the rust-shell.");
+    println!("Befehle:");
+    println!("  - echo <text>");
+    println!("  - pwd");
+    println!("  - cd <path>");
+    println!("  - export <variable>=<value>");
 }

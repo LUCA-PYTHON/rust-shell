@@ -17,6 +17,9 @@ impl ShellState {
     pub fn set(&mut self, name: &str, value: &str) {
         self.vars.insert(name.to_string(), value.to_string());
     }
+    pub fn all(&self) -> &HashMap<String, String> {
+        &self.vars
+    }
 }
 
 impl Default for ShellState {
