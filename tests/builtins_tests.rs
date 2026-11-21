@@ -49,3 +49,9 @@ fn cd_to_missing_dir_fails() {
     let result = builtins::cd(&["/notexisting"]);
     assert!(result.is_err());
 }
+
+#[test]
+fn identifies_export() {
+    let result = identify(&["export", "TEST=test"]);
+    assert!(matches!(result, Command::Export(args) if args == ["TEST=test"]));
+}
