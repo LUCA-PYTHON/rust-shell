@@ -59,5 +59,8 @@ pub fn help() {
     println!("  - echo <text>");
     println!("  - pwd");
     println!("  - cd <path>");
-    println!("  - export <variable>=<value>");
+    println!("  - export <name>=<value>");
+    println!("  - env <NAME>");
+    println!("  - fm <path>");
+    println!("  - help");
 }
