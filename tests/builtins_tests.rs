@@ -1,6 +1,6 @@
 use rust_shell::builtins;
-use rust_shell::state::{ShellState};
 use rust_shell::parser::{Command, identify};
+use rust_shell::state::ShellState;
 
 #[test]
 fn identifies_exit() {
