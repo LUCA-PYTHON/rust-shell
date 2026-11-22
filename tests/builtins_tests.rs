@@ -72,10 +72,23 @@ fn export_without_equals_sign_fails() {
 }
 
 #[test]
-#[test]
 fn export_with_name_and_value_succeeds() {
     let mut state = ShellState::new();
     let result = builtins::export(&["NAME=testuser"], &mut state);
     assert!(result.is_ok());
     assert_eq!(state.get("NAME"), Some(&String::from("testuser")));
+}
+
+#[test]
+fn env_cmd_without_argument() {
+    let mut state = ShellState::new();
+    let input: [&str; 0] = [];
+    assert!(builtins::env_cmd(&input, &mut state).is_ok());
+}
+
+#[test]
+fn env_cmd_without_equals_sign_fails() {
+    let mut state = ShellState::new();
+    let input = ["test"];
+    assert!(builtins::env_cmd(&input, &mut state).is_err());
 }
