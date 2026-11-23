@@ -165,6 +165,28 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 KeyCode::Down if cy + 1 < lines.len() => {
                     cy += 1;
                 }
+                KeyCode::Home => {
+                    cx = 0;
+                }
+                KeyCode::End => {
+                    cx = lines[cy].len();
+                }
+                KeyCode::Delete => {
+                    if cx < lines[cy].len() {
+                        lines[cy].remove(cx);
+                        changed = true;
+                    } else if cy + 1 < lines.len() {
+                        let next = lines.remove(cy + 1);
+                        lines[cy].extend(next);
+                        changed = true;
+                    }
+                }
+                KeyCode::PageUp => {
+                    cy = cy.saturating_sub(rows);
+                }
+                KeyCode::PageDown => {
+                    cy = (cy + rows).min(lines.len() - 1);
+                }
                 _ => {}
             }
             cx = cx.min(lines[cy].len());
@@ -231,12 +253,7 @@ fn draw(
         queue!(out, MoveTo(0, i as u16 + 1), Print(visible)).unwrap();
     }
 
-    let _info = if msg.is_empty() {
-        format!("Line {}, Col {}", cy + 1, cx + 1)
-    } else {
-        msg.to_string()
-    };
-    let last = height.saturating_sub(2) as u16;
+    let last = height.saturating_sub(1) as u16;
 
     if msg.is_empty() {
         queue!(
