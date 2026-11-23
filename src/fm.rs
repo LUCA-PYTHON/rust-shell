@@ -66,7 +66,12 @@ pub fn run(args: &[&str]) -> Result<(), String> {
 
             match key.code {
                 KeyCode::Char('x') | KeyCode::Char('c') if ctrl => {
-                    break;
+                    if changed {
+                        confirm = true;
+                        msg = "Close file? (Unsaved changes) (y/n)".to_string();
+                    } else {
+                        break;
+                    }
                 }
                 KeyCode::Char('s') if ctrl => {
                     let strings: Vec<String> = lines.iter().map(|l| l.iter().collect()).collect();
