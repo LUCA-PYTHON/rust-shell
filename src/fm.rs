@@ -2,7 +2,9 @@ use crossterm::{
     cursor::MoveTo,
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute, queue,
-    style::{Attribute, Print, SetAttribute},
+    style::{
+        Attribute, Color, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor,
+    },
     terminal::{self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::fs;
@@ -159,6 +161,16 @@ fn bar(text: &str, width: usize) -> String {
     format!("{:<width$}", cut, width = width)
 }
 
+fn h_bar(left: &str, right: &str, width: usize) -> String {
+    let right_len = right.chars().count();
+    let left_cut: String = left
+        .chars()
+        .take(width.saturating_sub(right_len + 1))
+        .collect();
+    let pad = width.saturating_sub(left_cut.chars().count() + right_len);
+    format!("{}{}{}", left_cut, " ".repeat(pad), right)
+}
+
 fn draw(
     path: &str,
     lines: &[Vec<char>],
@@ -171,16 +183,15 @@ fn draw(
     let mut out = io::stdout();
     let (width, height) = terminal::size().unwrap();
     let (width, height) = (width as usize, height as usize);
+    let pos = format!("Line {}, Col {}", cy + 1, cx + 1);
+    let title = format!(" fm {}{}", path, if changed { " [modified]" } else { "" });
 
     queue!(out, Clear(ClearType::All)).unwrap();
     queue!(
         out,
         MoveTo(0, 0),
         SetAttribute(Attribute::Reverse),
-        Print(bar(
-            &format!(" fm {}{}", path, if changed { "  [modified]" } else { "" }),
-            width
-        )),
+        Print(h_bar(&title, &pos, width)),
         SetAttribute(Attribute::Reset)
     )
     .unwrap();
@@ -195,33 +206,51 @@ fn draw(
         queue!(out, MoveTo(0, i as u16 + 1), Print(visible)).unwrap();
     }
 
-    let info = if msg.is_empty() {
+    let _info = if msg.is_empty() {
         format!("Line {}, Col {}", cy + 1, cx + 1)
     } else {
         msg.to_string()
     };
+    let last = height.saturating_sub(2) as u16;
 
-    queue!(
-        out,
-        MoveTo(0, height.saturating_sub(1) as u16),
-        SetAttribute(Attribute::Reverse),
-        Print(" CTRL+X "),
-        SetAttribute(Attribute::Reset),
-        Print(" Close  "),
-        SetAttribute(Attribute::Reverse),
-        Print(" CTRL+S "),
-        SetAttribute(Attribute::Reset),
-        Print(" Save "),
-        SetAttribute(Attribute::Reverse),
-        Print(" CTRL+D "),
-        SetAttribute(Attribute::Reset),
-        Print(" Delete "),
-        SetAttribute(Attribute::Reverse),
-        Print(" CTRL+L "),
-        SetAttribute(Attribute::Reset),
-        Print(format!(" Delete line {}", info))
-    )
-    .unwrap();
+    if msg.is_empty() {
+        queue!(
+            out,
+            MoveTo(0, height.saturating_sub(1) as u16),
+            SetAttribute(Attribute::Reverse),
+            Print(" CTRL+X "),
+            SetAttribute(Attribute::Reset),
+            Print(" Close  "),
+            SetAttribute(Attribute::Reverse),
+            Print(" CTRL+S "),
+            SetAttribute(Attribute::Reset),
+            Print(" Save "),
+            SetAttribute(Attribute::Reverse),
+            Print(" CTRL+D "),
+            SetAttribute(Attribute::Reset),
+            Print(" Delete "),
+            SetAttribute(Attribute::Reverse),
+            Print(" CTRL+L "),
+            SetAttribute(Attribute::Reset),
+            Print(" Delete line".to_string())
+        )
+        .unwrap();
+    } else {
+        let color = if msg.starts_with("Error") || msg.contains('?') {
+            Color::DarkRed
+        } else {
+            Color::DarkGreen
+        };
+        queue!(
+            out,
+            MoveTo(0, last),
+            SetBackgroundColor(color),
+            SetForegroundColor(Color::White),
+            Print(bar(&format!(" {}", msg), width)),
+            ResetColor
+        )
+        .unwrap();
+    }
 
     let cur_x = cx.min(width.saturating_sub(1));
     let cur_y = (cy - top + 1).min(height.saturating_sub(2));
