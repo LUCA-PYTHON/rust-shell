@@ -21,6 +21,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
     }
 
     let (mut cx, mut cy) = (0usize, 0usize);
+    let mut top = 0usize;
     let mut changed = false;
     let mut msg = String::new();
 
@@ -31,7 +32,15 @@ pub fn run(args: &[&str]) -> Result<(), String> {
     execute!(io::stdout(), EnterAlternateScreen).unwrap();
 
     loop {
-        draw(path, &lines, cx, cy, changed, &msg);
+        let (_, h) = terminal::size().unwrap();
+        let rows = (h as usize).saturating_sub(2).max(1);
+        if cy < top {
+            top = cy;
+        } else if cy >= top + rows {
+            top = cy + 1 - rows;
+        }
+
+        draw(path, &lines, cx, cy, top, changed, &msg);
 
         if let Event::Key(key) = event::read().unwrap() {
             if key.kind == KeyEventKind::Release {
@@ -76,6 +85,14 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 KeyCode::Char('d') if ctrl => {
                     confirm = true;
                     msg = "Delete file? (y/n)".to_string();
+                }
+                KeyCode::Char('l') if ctrl => {
+                    lines.remove(cy);
+                    if lines.is_empty() {
+                        lines.push(Vec::new());
+                    }
+                    cy = cy.min(lines.len() - 1);
+                    changed = true;
                 }
                 KeyCode::Enter => {
                     let rest = lines[cy].split_off(cx);
@@ -137,7 +154,15 @@ fn bar(text: &str, width: usize) -> String {
     format!("{:<width$}", cut, width = width)
 }
 
-fn draw(path: &str, lines: &[Vec<char>], cx: usize, cy: usize, changed: bool, msg: &str) {
+fn draw(
+    path: &str,
+    lines: &[Vec<char>],
+    cx: usize,
+    cy: usize,
+    top: usize,
+    changed: bool,
+    msg: &str,
+) {
     let mut out = io::stdout();
     let (width, height) = terminal::size().unwrap();
     let (width, height) = (width as usize, height as usize);
@@ -155,7 +180,12 @@ fn draw(path: &str, lines: &[Vec<char>], cx: usize, cy: usize, changed: bool, ms
     )
     .unwrap();
 
-    for (i, line) in lines.iter().enumerate().take(height.saturating_sub(2)) {
+    for (i, line) in lines
+        .iter()
+        .skip(top)
+        .enumerate()
+        .take(height.saturating_sub(2))
+    {
         let visible: String = line.iter().take(width).collect();
         queue!(out, MoveTo(0, i as u16 + 1), Print(visible)).unwrap();
     }
@@ -180,12 +210,16 @@ fn draw(path: &str, lines: &[Vec<char>], cx: usize, cy: usize, changed: bool, ms
         SetAttribute(Attribute::Reverse),
         Print(" CTRL+D "),
         SetAttribute(Attribute::Reset),
-        Print(format!(" Delete {}", info))
+        Print(" Delete "),
+        SetAttribute(Attribute::Reverse),
+        Print(" CTRL+L "),
+        SetAttribute(Attribute::Reset),
+        Print(format!(" Delete line {}", info))
     )
     .unwrap();
 
     let cur_x = cx.min(width.saturating_sub(1));
-    let cur_y = (cy + 1).min(height.saturating_sub(2));
+    let cur_y = (cy - top + 1).min(height.saturating_sub(2));
     queue!(out, MoveTo(cur_x as u16, cur_y as u16)).unwrap();
 
     out.flush().unwrap();
