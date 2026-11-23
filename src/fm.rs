@@ -9,10 +9,23 @@ use crossterm::{
 };
 use std::fs;
 use std::io::{self, Write};
+use std::path::Path;
+
+#[derive(PartialEq)]
+enum Dialog {
+    Nothing,
+    ConfirmClose,
+    ConfirmDelete,
+}
 
 pub fn run(args: &[&str]) -> Result<(), String> {
     let path = *args.first().ok_or("fm: missing argument")?;
-    let text = fs::read_to_string(path).map_err(|e| format!("fm: {} : {}", path, e))?;
+    let is_new = !Path::new(path).exists();
+    let text = if is_new {
+        String::new()
+    } else {
+        fs::read_to_string(path).map_err(|e| format!("fm: {} : {}", path, e))?
+    };
 
     let mut lines: Vec<Vec<char>> = text
         .lines()
@@ -25,9 +38,13 @@ pub fn run(args: &[&str]) -> Result<(), String> {
     let (mut cx, mut cy) = (0usize, 0usize);
     let mut top = 0usize;
     let mut changed = false;
-    let mut msg = String::new();
+    let mut msg = if is_new {
+        "New File created".to_string()
+    } else {
+        String::new()
+    };
 
-    let mut confirm = false;
+    let mut dialog = Dialog::Nothing;
     let mut deleted = false;
 
     terminal::enable_raw_mode().unwrap();
@@ -50,27 +67,31 @@ pub fn run(args: &[&str]) -> Result<(), String> {
             }
 
             msg.clear();
-            if confirm {
-                confirm = false;
-                if key.code == KeyCode::Char('y') {
-                    match fs::remove_file(path) {
+            if dialog != Dialog::Nothing {
+                let submit = key.code == KeyCode::Char('y');
+                match dialog {
+                    Dialog::ConfirmClose if submit => break,
+                    Dialog::ConfirmDelete if submit => match fs::remove_file(path) {
                         Ok(()) => {
                             deleted = true;
                             break;
                         }
                         Err(e) => msg = format!("Error deleting: {}", e),
-                    }
+                    },
+                    _ => {}
                 }
+                dialog = Dialog::Nothing;
                 continue;
             }
+
             let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
             let alt = key.modifiers.contains(KeyModifiers::ALT);
 
             match key.code {
                 KeyCode::Char('x') | KeyCode::Char('c') if ctrl => {
                     if changed {
-                        confirm = true;
-                        msg = "Close file? (Unsaved changes) (y/n)".to_string();
+                        dialog = Dialog::ConfirmClose;
+                        msg = "Close without saving? (y/n)".to_string();
                     } else {
                         break;
                     }
@@ -90,8 +111,12 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                     }
                 }
                 KeyCode::Char('d') if ctrl => {
-                    confirm = true;
-                    msg = "Delete file? (y/n)".to_string();
+                    if Path::new(path).exists() {
+                        dialog = Dialog::ConfirmDelete;
+                        msg = "Delete file? (y/n)".to_string();
+                    } else {
+                        msg = "Error: file not saved yet, nothing to delete".to_string();
+                    }
                 }
                 KeyCode::Char('l') if ctrl => {
                     lines.remove(cy);
