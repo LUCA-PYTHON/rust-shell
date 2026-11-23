@@ -24,6 +24,9 @@ pub fn run(args: &[&str]) -> Result<(), String> {
     let mut changed = false;
     let mut msg = String::new();
 
+    let mut confirm = false;
+    let mut deleted = false;
+
     terminal::enable_raw_mode().unwrap();
     execute!(io::stdout(), EnterAlternateScreen).unwrap();
 
@@ -36,14 +39,26 @@ pub fn run(args: &[&str]) -> Result<(), String> {
             }
 
             msg.clear();
-            let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
-            if ctrl && matches!(key.code, KeyCode::Char('x') | KeyCode::Char('c')) {
-                break;
+            if confirm {
+                confirm = false;
+                if key.code == KeyCode::Char('y') {
+                    match fs::remove_file(path) {
+                        Ok(()) => {
+                            deleted = true;
+                            break;
+                        }
+                        Err(e) => msg = format!("Error deleting: {}", e),
+                    }
+                }
+                continue;
             }
-
+            let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
             let alt = key.modifiers.contains(KeyModifiers::ALT);
 
             match key.code {
+                KeyCode::Char('x') | KeyCode::Char('c') if ctrl => {
+                    break;
+                }
                 KeyCode::Char('s') if ctrl => {
                     let strings: Vec<String> = lines.iter().map(|l| l.iter().collect()).collect();
                     let content = strings.join("\n") + "\n";
@@ -57,6 +72,10 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                             msg = format!("Error saving: {}", e);
                         }
                     }
+                }
+                KeyCode::Char('d') if ctrl => {
+                    confirm = true;
+                    msg = "Delete file? (y/n)".to_string();
                 }
                 KeyCode::Enter => {
                     let rest = lines[cy].split_off(cx);
@@ -84,9 +103,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                     changed = true;
                 }
                 KeyCode::Left => {
-                    if cx > 0 {
-                        cx = cx.saturating_sub(1);
-                    }
+                    cx = cx.saturating_sub(1);
                 }
                 KeyCode::Right => {
                     if cx < lines[cy].len() {
@@ -94,9 +111,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                     }
                 }
                 KeyCode::Up => {
-                    if cy > 0 {
-                        cy = cy.saturating_sub(1);
-                    }
+                    cy = cy.saturating_sub(1);
                 }
                 KeyCode::Down if cy + 1 < lines.len() => {
                     cy += 1;
@@ -109,6 +124,11 @@ pub fn run(args: &[&str]) -> Result<(), String> {
 
     execute!(io::stdout(), LeaveAlternateScreen).unwrap();
     terminal::disable_raw_mode().unwrap();
+
+    if deleted {
+        println!("fm: {} deleted", path);
+    }
+
     Ok(())
 }
 
@@ -156,7 +176,11 @@ fn draw(path: &str, lines: &[Vec<char>], cx: usize, cy: usize, changed: bool, ms
         SetAttribute(Attribute::Reverse),
         Print(" CTRL+S "),
         SetAttribute(Attribute::Reset),
-        Print(format!(" Save    {}", info))
+        Print(" Save "),
+        SetAttribute(Attribute::Reverse),
+        Print(" CTRL+D "),
+        SetAttribute(Attribute::Reset),
+        Print(format!(" Delete {}", info))
     )
     .unwrap();
 
