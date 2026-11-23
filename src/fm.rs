@@ -85,7 +85,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 }
                 KeyCode::Left => {
                     if cx > 0 {
-                        cx -= cx.saturating_sub(1);
+                        cx = cx.saturating_sub(1);
                     }
                 }
                 KeyCode::Right => {
@@ -95,7 +95,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 }
                 KeyCode::Up => {
                     if cy > 0 {
-                        cy -= cy.saturating_sub(1);
+                        cy = cy.saturating_sub(1);
                     }
                 }
                 KeyCode::Down if cy + 1 < lines.len() => {
