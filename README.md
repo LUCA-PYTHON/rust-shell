@@ -15,9 +15,16 @@ Hier soll ein Terminal in rust enstehen. Vergleich zu [C-Shell](https://github.c
     - `echo "te    st"` => Ausgabe: `te    st`
     - `echo te    st`   => Ausgabe: `te st`
 - `File Manager` Dateien verwalten im Terminal
+    - Path nicht gefunden/Datei nicht gefunden wird eine erstellt
     - `pfeiltasten`     => Navigation in der Datei
+    - `CTRL + D`        => Datei löschen
+    - `CTRL + L`        => Zeile löschen
     - `CTRL + X`        => close file manager
     - `CTRL + S`        => Speichern der datei
+    - `Home`            => Ganz links in eine Zeile
+    - `End`             => Ganz rechts in eine Zeile
+    - `Bild hoch`       => Ganz an Anfang vom Fenster springen
+    - `Bild runter`     => Ganz ans Ende vom Fenster springen
 
 ## Tests
 - `parser_tests`    => Kleiner test des parsers mit `ls -l`
