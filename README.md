@@ -26,6 +26,22 @@ Hier soll ein Terminal in rust enstehen. Vergleich zu [C-Shell](https://github.c
     - `Bild hoch`       => Ganz an Anfang vom Fenster springen
     - `Bild runter`     => Ganz ans Ende vom Fenster springen
 
+## Projektstruktur
+── README.md
+── Cargo.lock
+── Cargo.toml
+── .gitignore
+── src/
+    ├── builtins.rs
+    ├── fm.rs
+    ├── lib.rs
+    ├── main.rs
+    ├── parser.rs
+    └── state.rs
+── tests/
+    ├── builtins_tests.rs
+    └── parser_tests.rs
+
 ## Tests
 - `parser_tests`    => Kleiner test des parsers mit `ls -l`
 - `builtins_tests`  => Tests für alle Builtins, `echo`, `pwd`, `cd`, `export`, `env`, und `is_empty`
