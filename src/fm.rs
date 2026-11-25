@@ -192,7 +192,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                         lines[cy].insert(cx, ' ');
                         cx += 1;
                     }
-                    changed == true;
+                    changed = true;
                 }
                 _ => {}
             }
@@ -240,6 +240,10 @@ fn draw(
     let pos = format!("Line {}, Col {}", cy + 1, cx + 1);
     let title = format!(" fm {}{}", path, if changed { " [modified]" } else { "" });
 
+    let num_w = lines.len().to_string().len();
+    let puffer = num_w + 3;
+    let text_w = width.saturating_sub(puffer);
+
     queue!(out, Clear(ClearType::All)).unwrap();
     queue!(
         out,
@@ -256,8 +260,16 @@ fn draw(
         .enumerate()
         .take(height.saturating_sub(2))
     {
-        let visible: String = line.iter().take(width).collect();
-        queue!(out, MoveTo(0, i as u16 + 1), Print(visible)).unwrap();
+        let visible: String = line.iter().take(text_w).collect();
+        queue!(
+            out,
+            MoveTo(0, i as u16 + 1),
+            SetForegroundColor(Color::DarkGrey),
+            Print(format!("{:>w$} | ", top + i + 1, w = num_w)),
+            ResetColor,
+            Print(visible)
+        )
+        .unwrap();
     }
 
     let last = height.saturating_sub(1) as u16;
@@ -301,7 +313,7 @@ fn draw(
         .unwrap();
     }
 
-    let cur_x = cx.min(width.saturating_sub(1));
+    let cur_x = (puffer + cx).min(width.saturating_sub(1));
     let cur_y = (cy - top + 1).min(height.saturating_sub(2));
     queue!(out, MoveTo(cur_x as u16, cur_y as u16)).unwrap();
 
