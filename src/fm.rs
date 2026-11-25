@@ -46,6 +46,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
 
     let mut dialog = Dialog::Nothing;
     let mut deleted = false;
+    let mut clipboard: Option<Vec<char>> = None;
 
     terminal::enable_raw_mode().unwrap();
     execute!(io::stdout(), EnterAlternateScreen).unwrap();
@@ -125,6 +126,23 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                     }
                     cy = cy.min(lines.len() - 1);
                     changed = true;
+                }
+                KeyCode::Char('k') if ctrl => {
+                    clipboard = Some(lines.remove(cy));
+                    if lines.is_empty() {
+                        lines.push(Vec::new());
+                    }
+                    cy = cy.min(lines.len() - 1);
+                    changed = true;
+                    msg = "Line cut".to_string();
+                }
+                KeyCode::Char('u') => match &clipboard {
+                    Some(line) => {
+                        lines.insert(cy, line.clone());
+                        cy += 1;
+                        changed = true;
+                    }
+                    None => msg = "Clipboard is empty".to_string(),
                 }
                 KeyCode::Enter => {
                     let rest = lines[cy].split_off(cx);
@@ -293,7 +311,15 @@ fn draw(
             SetAttribute(Attribute::Reverse),
             Print(" CTRL+L "),
             SetAttribute(Attribute::Reset),
-            Print(" Delete line".to_string())
+            Print(" Delete line "),
+            SetAttribute(Attribute::Reverse),
+            Print(" CTRL+K "),
+            SetAttribute(Attribute::Reset),
+            Print(" Cut line "),
+            SetAttribute(Attribute::Reverse),
+            Print(" CTRL+U "),
+            SetAttribute(Attribute::Reset),
+            Print(" Paste line ")
         )
         .unwrap();
     } else {
