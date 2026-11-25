@@ -187,6 +187,13 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 KeyCode::PageDown => {
                     cy = (cy + rows).min(lines.len() - 1);
                 }
+                KeyCode::Tab => {
+                    for _ in 0..4 {
+                        lines[cy].insert(cx, ' ');
+                        cx += 1;
+                    }
+                    changed == true;
+                }
                 _ => {}
             }
             cx = cx.min(lines[cy].len());
