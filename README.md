@@ -40,6 +40,8 @@ Dateien direkt im Terminal verwalten.
 - `CTRL + L` – Zeile löschen
 - `CTRL + X` – File Manager schließen
 - `CTRL + S` – Datei speichern
+- `CTRL + K` - Zeile ausschneiden
+- `CTRL + U` - Ausgeschnittene Zeile einfügen
 - `Home` – Zum Anfang der Zeile springen
 - `End` – Zum Ende der Zeile springen
 - `Bild hoch` – Zum Anfang des Fensters springen
