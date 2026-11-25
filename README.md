@@ -27,18 +27,18 @@ Hier soll ein Terminal in rust enstehen. Vergleich zu [C-Shell](https://github.c
     - `Bild runter`     => Ganz ans Ende vom Fenster springen
 
 ## Projektstruktur
-── README.md
-── Cargo.lock
-── Cargo.toml
-── .gitignore
-── src/
-    ├── builtins.rs
-    ├── fm.rs
-    ├── lib.rs
-    ├── main.rs
-    ├── parser.rs
-    └── state.rs
-── tests/
+├── README.md
+├── Cargo.lock
+├── Cargo.toml
+├── .gitignore
+├── src/
+│   ├── builtins.rs
+│   ├── fm.rs
+│   ├── lib.rs
+│   ├── main.rs
+│   ├── parser.rs
+│   └── state.rs
+└── tests/
     ├── builtins_tests.rs
     └── parser_tests.rs
 

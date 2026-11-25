@@ -56,11 +56,11 @@ pub fn env_cmd(args: &[&str], state: &ShellState) -> Result<(), String> {
 pub fn help() {
     println!("Info Menu for the rust-shell.");
     println!("Befehle:");
-    println!("  - echo <text>");
-    println!("  - pwd");
-    println!("  - cd <path>");
-    println!("  - export <name>=<value>");
-    println!("  - env <NAME>");
-    println!("  - fm <path>");
-    println!("  - help");
+    println!("  -> echo <text>");
+    println!("  -> pwd");
+    println!("  -> cd <path>");
+    println!("  -> export <name>=<value>");
+    println!("  -> env <NAME>");
+    println!("  -> fm <path>");
+    println!("  -> help                         Hilfe Menu anzeigen");
 }
