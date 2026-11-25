@@ -1,32 +1,53 @@
 # Rust Shell
 
-Hier soll ein Terminal in rust enstehen. Vergleich zu [C-Shell](https://github.com/LUCA-PYTHON/C-Shell).
+Ein Terminal, das mit **Rust** entwickelt wird. Das Projekt orientiert sich teilweise an meiner [C-Shell](https://github.com/LUCA-PYTHON/C-Shell).
 
 ## Befehle
-- `echo <text>`         => Gibt den eingebenen Text in einer neuen Zeile zurück
-- `pwd`                 => Zeigt den Aktuellen Pfad an
-- `cd <path>`           => Pfad ändern in dem man arbeiten möchte
-- `export <NAME=value>` => Variablen in ShellState (env) setzen
-- `env <NAME>`          => Alle/Einzelene Daten aus dem Envoierment holen
-- `fm <path>`           => File Manager öffnen
+
+| Befehl | Beschreibung |
+|---|---|
+| `echo <text>` | Gibt den eingegebenen Text in einer neuen Zeile aus. |
+| `pwd` | Zeigt den aktuellen Pfad an. |
+| `cd <path>` | Ändert das Arbeitsverzeichnis. |
+| `export <NAME=value>` | Setzt Variablen im `ShellState` (Environment). |
+| `env <NAME>` | Gibt alle oder einzelne Environment-Variablen aus. |
+| `fm <path>` | Öffnet den File Manager. |
 
 ## Andere Funktionen
-- `""` Erkennung und Verarbeitung
-    - `echo "te    st"` => Ausgabe: `te    st`
-    - `echo te    st`   => Ausgabe: `te st`
-- `File Manager` Dateien verwalten im Terminal
-    - Path nicht gefunden/Datei nicht gefunden wird eine erstellt
-    - `pfeiltasten`     => Navigation in der Datei
-    - `CTRL + D`        => Datei löschen
-    - `CTRL + L`        => Zeile löschen
-    - `CTRL + X`        => close file manager
-    - `CTRL + S`        => Speichern der datei
-    - `Home`            => Ganz links in eine Zeile
-    - `End`             => Ganz rechts in eine Zeile
-    - `Bild hoch`       => Ganz an Anfang vom Fenster springen
-    - `Bild runter`     => Ganz ans Ende vom Fenster springen
+
+### String-Verarbeitung
+
+- Erkennung und Verarbeitung von doppelten Anführungszeichen (`""`).
+- Mehrere Leerzeichen innerhalb von Anführungszeichen bleiben erhalten.
+
+Beispiele:
+
+```bash
+echo "te    st"
+# Ausgabe: te    st
+
+echo te    st
+# Ausgabe: te st
+```
+
+### File Manager
+
+Dateien direkt im Terminal verwalten.
+
+- Existiert der angegebene Pfad bzw. die Datei nicht, wird eine neue Datei erstellt.
+- `Pfeiltasten` – Navigation innerhalb der Datei
+- `CTRL + D` – Datei löschen
+- `CTRL + L` – Zeile löschen
+- `CTRL + X` – File Manager schließen
+- `CTRL + S` – Datei speichern
+- `Home` – Zum Anfang der Zeile springen
+- `End` – Zum Ende der Zeile springen
+- `Bild hoch` – Zum Anfang des Fensters springen
+- `Bild runter` – Zum Ende des Fensters springen
 
 ## Projektstruktur
+
+```text
 .
 ├── README.md
 ├── Cargo.lock
@@ -42,10 +63,15 @@ Hier soll ein Terminal in rust enstehen. Vergleich zu [C-Shell](https://github.c
 └── tests/
     ├── builtins_tests.rs
     └── parser_tests.rs
+```
 
 ## Tests
-- `parser_tests`    => Kleiner test des parsers mit `ls -l`
-- `builtins_tests`  => Tests für alle Builtins, `echo`, `pwd`, `cd`, `export`, `env`, und `is_empty`
+
+| Testdatei | Beschreibung |
+|---|---|
+| `parser_tests` | Testet den Parser unter anderem mit `ls -l`. |
+| `builtins_tests` | Testet alle Builtins: `echo`, `pwd`, `cd`, `export`, `env` und `is_empty`. |
 
 ## License
-bald...
+
+Coming soon...
