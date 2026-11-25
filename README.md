@@ -27,6 +27,7 @@ Hier soll ein Terminal in rust enstehen. Vergleich zu [C-Shell](https://github.c
     - `Bild runter`     => Ganz ans Ende vom Fenster springen
 
 ## Projektstruktur
+.
 ├── README.md
 ├── Cargo.lock
 ├── Cargo.toml
