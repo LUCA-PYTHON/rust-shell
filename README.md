@@ -56,8 +56,11 @@ Dateien direkt im Terminal verwalten.
 ├── Cargo.toml
 ├── .gitignore
 ├── src/
+│   ├── file_managment
+│   │   ├── command.rs
+│   │   ├── fm.rs
+│   │   └── mod.rs
 │   ├── builtins.rs
-│   ├── fm.rs
 │   ├── lib.rs
 │   ├── main.rs
 │   ├── parser.rs
