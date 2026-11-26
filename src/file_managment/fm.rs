@@ -14,6 +14,39 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
 
+struct TerminalGuard {
+    raw_mode_enabled: bool,
+    alternate_screen_enabled: bool,
+}
+
+impl TerminalGuard {
+    fn new() -> io::Result<Self> {
+        terminal::enable_raw_mode()?;
+
+        let mut guard = Self {
+            raw_mode_enabled: true,
+            alternate_screen_enabled: false,
+        };
+
+        guard.alternate_screen_enabled = true;
+        execute!(io::stdout(), EnterAlternateScreen)?;
+
+        Ok(guard)
+    }
+}
+
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        if self.alternate_screen_enabled {
+            let _ = execute!(io::stdout(), LeaveAlternateScreen);
+        }
+
+        if self.raw_mode_enabled {
+            let _ = terminal::disable_raw_mode();
+        }
+    }
+}
+
 pub fn run(args: &[&str]) -> Result<(), String> {
     let file_path = *args.first().ok_or("fm: missing argument")?;
     let is_new_file = !Path::new(file_path).exists();
@@ -48,8 +81,8 @@ pub fn run(args: &[&str]) -> Result<(), String> {
         clipboard_line: None,
     };
 
-    terminal::enable_raw_mode().unwrap();
-    execute!(io::stdout(), EnterAlternateScreen).unwrap();
+    let terminal_guard =
+        TerminalGuard::new().map_err(|e| format!("fm: terminal setup failed: {}", e))?;
 
     loop {
         let (_, terminal_height) = terminal::size().unwrap();
@@ -108,8 +141,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
         }
     }
 
-    execute!(io::stdout(), LeaveAlternateScreen).unwrap();
-    terminal::disable_raw_mode().unwrap();
+    drop(terminal_guard);
 
     if editor.file_deleted {
         println!("fm: {} deleted", editor.file_path);
