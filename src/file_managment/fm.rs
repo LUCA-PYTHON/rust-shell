@@ -104,34 +104,14 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 KeyCode::Char('l') if ctrl => editor.delete_row(),
                 KeyCode::Char('k') if ctrl => editor.cut_row(),
                 KeyCode::Char('u') if ctrl => editor.copy_fom_clipboard(),
-
-                KeyCode::Left => {
-                    editor.cursor_col = editor.cursor_col.saturating_sub(1);
-                }
-                KeyCode::Right => {
-                    if editor.cursor_col < editor.lines[editor.cursor_row].len() {
-                        editor.cursor_col += 1;
-                    }
-                }
-                KeyCode::Up => {
-                    editor.cursor_row = editor.cursor_row.saturating_sub(1);
-                }
-                KeyCode::Down if editor.cursor_row + 1 < editor.lines.len() => {
-                    editor.cursor_row += 1;
-                }
-                KeyCode::Home => {
-                    editor.cursor_col = 0;
-                }
-                KeyCode::End => {
-                    editor.cursor_col = editor.lines[editor.cursor_row].len();
-                }
-                KeyCode::PageUp => {
-                    editor.cursor_row = editor.cursor_row.saturating_sub(visible_rows);
-                }
-                KeyCode::PageDown => {
-                    editor.cursor_row =
-                        (editor.cursor_row + visible_rows).min(editor.lines.len() - 1);
-                }
+                KeyCode::Left => editor.left(),
+                KeyCode::Right => editor.right(),
+                KeyCode::Up => editor.up(),
+                KeyCode::Down => editor.down(),
+                KeyCode::Home => editor.home(),
+                KeyCode::End => editor.end(),
+                KeyCode::PageUp => editor.page_up(visible_rows),
+                KeyCode::PageDown => editor.page_down(visible_rows),
                 _ => {}
             }
             editor.cursor_col = editor.cursor_col.min(editor.lines[editor.cursor_row].len());

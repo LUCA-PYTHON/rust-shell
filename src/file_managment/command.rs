@@ -117,4 +117,44 @@ impl Editor {
             None => self.status_message = "Clipboard is empty".to_string(),
         }
     }
+
+    pub (super) fn left(&mut self) {
+        self.cursor_col = self.cursor_col.saturating_sub(1);
+    }
+
+    pub (super) fn right(&mut self) {
+        if self.cursor_col < self.lines[self.cursor_row].len() {
+            self.cursor_col += 1;
+        }
+    }
+
+    pub (super) fn up(&mut self) {
+        self.cursor_row = self.cursor_row.saturating_sub(1);
+    }
+
+    pub (super) fn down(&mut self) {
+        if self.cursor_row + 1 < self.lines.len() {
+            self.cursor_row += 1;
+        }
+    }
+
+    pub (super) fn home(&mut self) {
+        self.cursor_col = 0;
+    }
+
+    pub (super) fn end(&mut self) {
+        self.cursor_col = self.lines[self.cursor_row].len();
+    }
+
+    pub (super) fn page_up(&mut self, visible_rows: usize) {
+        self.cursor_row = self.cursor_row.saturating_sub(visible_rows);
+    }
+
+    pub (super) fn page_down(&mut self, visible_rows: usize) {
+        self.cursor_row = self
+            .cursor_row
+            .saturating_add(visible_rows)
+            .min(self.lines.len().saturating_sub(1));
+    }
+
 }
