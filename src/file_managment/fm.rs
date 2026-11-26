@@ -1,3 +1,4 @@
+// Hauptprogramm des Moduls 'file managment'
 use crossterm::{
     cursor::MoveTo,
     event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
@@ -7,29 +8,11 @@ use crossterm::{
     },
     terminal::{self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen},
 };
+
+use super::{Dialog, Editor};
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
-
-#[derive(PartialEq)]
-enum Dialog {
-    Nothing,
-    ConfirmClose,
-    ConfirmDelete,
-}
-
-struct Editor {
-    file_path: String,
-    lines: Vec<Vec<char>>,
-    cursor_col: usize,
-    cursor_row: usize,
-    scroll_row : usize,
-    modified: bool,
-    status_message: String,
-    dialog: Dialog,
-    file_deleted: bool,
-    clipboard_line: Option<Vec<char>>,
-}
 
 pub fn run(args: &[&str]) -> Result<(), String> {
     let file_path = *args.first().ok_or("fm: missing argument")?;
@@ -115,7 +98,11 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                     }
                 }
                 KeyCode::Char('s') if ctrl => {
-                    let line_strings: Vec<String> = editor.lines.iter().map(|line| line.iter().collect()).collect();
+                    let line_strings: Vec<String> = editor
+                        .lines
+                        .iter()
+                        .map(|line| line.iter().collect())
+                        .collect();
                     let file_text = line_strings.join("\n") + "\n";
 
                     match fs::write(&editor.file_path, file_text) {
@@ -133,7 +120,8 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                         editor.dialog = Dialog::ConfirmDelete;
                         editor.status_message = "Delete file? (y/n)".to_string();
                     } else {
-                        editor.status_message = "Error: file not saved yet, nothing to delete".to_string();
+                        editor.status_message =
+                            "Error: file not saved yet, nothing to delete".to_string();
                     }
                 }
                 KeyCode::Char('l') if ctrl => {
@@ -160,32 +148,10 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                         editor.modified = true;
                     }
                     None => editor.status_message = "Clipboard is empty".to_string(),
-                }
-                KeyCode::Enter => {
-                    let text_after_cursor = editor.lines[editor.cursor_row].split_off(editor.cursor_col);
-                    editor.lines.insert(editor.cursor_row + 1, text_after_cursor);
-                    editor.cursor_row += 1;
-                    editor.cursor_col = 0;
-                    editor.modified = true;
-                }
-                KeyCode::Backspace => {
-                    if editor.cursor_col > 0 {
-                        editor.lines[editor.cursor_row].remove(editor.cursor_col - 1);
-                        editor.cursor_col -= 1;
-                        editor.modified = true;
-                    } else if editor.cursor_row > 0 {
-                        let removed_line = editor.lines.remove(editor.cursor_row);
-                        editor.cursor_row -= 1;
-                        editor.cursor_col = editor.lines[editor.cursor_row].len();
-                        editor.lines[editor.cursor_row].extend(removed_line);
-                        editor.modified = true;
-                    }
-                }
-                KeyCode::Char(c) if !ctrl || alt => {
-                    editor.lines[editor.cursor_row].insert(editor.cursor_col, c);
-                    editor.cursor_col += 1;
-                    editor.modified = true;
-                }
+                },
+                KeyCode::Enter => editor.insert_new_line(),
+                KeyCode::Backspace => editor.backspace(),
+                KeyCode::Char(c) if !ctrl || alt => editor.insert_char(c),
                 KeyCode::Left => {
                     editor.cursor_col = editor.cursor_col.saturating_sub(1);
                 }
@@ -206,29 +172,15 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 KeyCode::End => {
                     editor.cursor_col = editor.lines[editor.cursor_row].len();
                 }
-                KeyCode::Delete => {
-                    if editor.cursor_col < editor.lines[editor.cursor_row].len() {
-                        editor.lines[editor.cursor_row].remove(editor.cursor_col);
-                        editor.modified = true;
-                    } else if editor.cursor_row + 1 < editor.lines.len() {
-                        let next = editor.lines.remove(editor.cursor_row + 1);
-                        editor.lines[editor.cursor_row].extend(next);
-                        editor.modified = true;
-                    }
-                }
+                KeyCode::Delete => editor.delete_forward(),
                 KeyCode::PageUp => {
                     editor.cursor_row = editor.cursor_row.saturating_sub(visible_rows);
                 }
                 KeyCode::PageDown => {
-                    editor.cursor_row = (editor.cursor_row + visible_rows).min(editor.lines.len() - 1);
+                    editor.cursor_row =
+                        (editor.cursor_row + visible_rows).min(editor.lines.len() - 1);
                 }
-                KeyCode::Tab => {
-                    for _ in 0..4 {
-                        editor.lines[editor.cursor_row].insert(editor.cursor_col, ' ');
-                        editor.cursor_col += 1;
-                    }
-                    editor.modified = true;
-                }
+                KeyCode::Tab => editor.insert_tab(),
                 _ => {}
             }
             editor.cursor_col = editor.cursor_col.min(editor.lines[editor.cursor_row].len());
@@ -245,11 +197,13 @@ pub fn run(args: &[&str]) -> Result<(), String> {
     Ok(())
 }
 
+// Text auf Terminal Breite abschneiden
 fn bar(text: &str, width: usize) -> String {
     let shortened: String = text.chars().take(width).collect();
     format!("{:<width$}", shortened, width = width)
 }
 
+// Zeile mit links Zeilennummer und rechts Dateitext
 fn h_bar(left_text: &str, right_text: &str, width: usize) -> String {
     let right_text_len = right_text.chars().count();
     let left_text_cut: String = left_text
@@ -260,12 +214,21 @@ fn h_bar(left_text: &str, right_text: &str, width: usize) -> String {
     format!("{}{}{}", left_text_cut, " ".repeat(padding), right_text)
 }
 
+// Datei 'zeichen', header -> dateiinhalt -> footer
 fn draw(editor: &Editor) {
     let mut stdout = io::stdout();
     let (width, height) = terminal::size().unwrap();
     let (width, height) = (width as usize, height as usize);
-    let position_text = format!("Line {}, Col {}", editor.cursor_row + 1, editor.cursor_col + 1);
-    let title_text = format!(" fm {}{}", editor.file_path, if editor.modified { " [modified]" } else { "" });
+    let position_text = format!(
+        "Line {}, Col {}",
+        editor.cursor_row + 1,
+        editor.cursor_col + 1
+    );
+    let title_text = format!(
+        " fm {}{}",
+        editor.file_path,
+        if editor.modified { " [modified]" } else { "" }
+    );
 
     let number_width = editor.lines.len().to_string().len();
     let gutter_width = number_width + 3;
@@ -281,7 +244,8 @@ fn draw(editor: &Editor) {
     )
     .unwrap();
 
-    for (screen_row, line) in editor.lines
+    for (screen_row, line) in editor
+        .lines
         .iter()
         .skip(editor.scroll_row)
         .enumerate()
@@ -292,7 +256,11 @@ fn draw(editor: &Editor) {
             stdout,
             MoveTo(0, screen_row as u16 + 1),
             SetForegroundColor(Color::DarkGrey),
-            Print(format!("{:>width$} | ", editor.scroll_row + screen_row + 1, width = number_width)),
+            Print(format!(
+                "{:>width$} | ",
+                editor.scroll_row + screen_row + 1,
+                width = number_width
+            )),
             ResetColor,
             Print(visible_text)
         )
@@ -332,11 +300,12 @@ fn draw(editor: &Editor) {
         )
         .unwrap();
     } else {
-        let message_color = if editor.status_message.starts_with("Error") || editor.status_message.contains('?') {
-            Color::DarkRed
-        } else {
-            Color::DarkGreen
-        };
+        let message_color =
+            if editor.status_message.starts_with("Error") || editor.status_message.contains('?') {
+                Color::DarkRed
+            } else {
+                Color::DarkGreen
+            };
         queue!(
             stdout,
             MoveTo(0, footer_row),

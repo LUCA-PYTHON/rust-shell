@@ -1,5 +1,5 @@
 use rust_shell::builtins;
-use rust_shell::fm;
+use rust_shell::file_managment;
 use rust_shell::parser::{Command, identify, parse_line};
 use rust_shell::state::{ShellState, expand};
 
@@ -52,7 +52,7 @@ fn main() {
                 }
             }
             Command::Fm(args) => {
-                if let Err(e) = fm::run(args) {
+                if let Err(e) = file_managment::run(args) {
                     eprintln!("{}", e);
                 }
             }
