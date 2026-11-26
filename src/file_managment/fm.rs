@@ -70,19 +70,9 @@ pub fn run(args: &[&str]) -> Result<(), String> {
             editor.status_message.clear();
             if editor.dialog != Dialog::Nothing {
                 let submited = key_event.code == KeyCode::Char('y');
-                match editor.dialog {
-                    Dialog::ConfirmClose if submited => break,
-                    Dialog::ConfirmDelete if submited => match fs::remove_file(&editor.file_path) {
-                        Ok(()) => {
-                            editor.file_deleted = true;
-                            break;
-                        }
-                        Err(e) => editor.status_message = format!("Error deleting: {}", e),
-                    },
-                    _ => {}
+                if editor.manage_delete(submited) {
+                    break;
                 }
-                editor.dialog = Dialog::Nothing;
-                continue;
             }
 
             let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
@@ -114,7 +104,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 KeyCode::PageDown => editor.page_down(visible_rows),
                 _ => {}
             }
-            editor.cursor_col = editor.cursor_col.min(editor.lines[editor.cursor_row].len());
+            editor.no_match();
         }
     }
 

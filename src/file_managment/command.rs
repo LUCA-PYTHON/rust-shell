@@ -5,6 +5,27 @@ use std::fs;
 use std::path::Path;
 
 impl Editor {
+    
+    pub(super) fn manage_delete(&mut self, submited: bool) -> bool {
+        match self.dialog {
+            Dialog::ConfirmClose if submited => true,
+            Dialog::ConfirmDelete if submited => {
+                match fs::remove_file(&self.file_path) {
+                    Ok(()) => {
+                        self.file_deleted = true;
+                        true
+                    }
+                    Err(e) => {
+                        self.status_message = format!("Error deleting: {}", e);
+                        false
+                    }
+                }
+            }
+
+            _ => false,
+        }
+    }
+
     pub(super) fn insert_char(&mut self, typed_char: char) {
         self.lines[self.cursor_row].insert(self.cursor_col, typed_char);
         self.cursor_col += 1;
@@ -157,4 +178,8 @@ impl Editor {
             .min(self.lines.len().saturating_sub(1));
     }
 
+    pub (super) fn no_match(&mut self) {
+        self.cursor_col = self.cursor_col.min(self.lines[self.cursor_row].len());
+    }
+    
 }
