@@ -268,7 +268,7 @@ fn draw(editor: &Editor) {
             SetAttribute(Attribute::Reverse),
             Print(" CTRL+U "),
             SetAttribute(Attribute::Reset),
-            Print(" Paste line ")
+            Print(" Paste "),
             SetAttribute(Attribute::Reverse),
             Print(" CTRL+R "),
             SetAttribute(Attribute::Reset),
