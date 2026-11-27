@@ -4,6 +4,8 @@ use super::{Dialog, Editor};
 use std::fs;
 use std::path::Path;
 
+use crossterm::event::KeyCode;
+
 impl Editor {
     pub(super) fn manage_delete(&mut self, submited: bool) -> bool {
         match self.dialog {
@@ -20,6 +22,31 @@ impl Editor {
             },
 
             _ => false,
+        }
+    }
+
+    pub(super) fn handle_rename_input(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Enter => self.rename_file(),
+
+            KeyCode::Esc => {
+                self.dialog = Dialog::Nothing;
+                self.rename_input.clear();
+            }
+
+            KeyCode::Backspace => {
+                self.rename_input.pop();
+            }
+
+            KeyCode::Char(c) => {
+                self.rename_input.push(c);
+            }
+
+            _ => {}
+        }
+
+        if self.dialog == Dialog::Rename {
+            self.status_message = format!("Rename: {}", self.rename_input);
         }
     }
 
@@ -133,6 +160,48 @@ impl Editor {
                 self.modified = true;
             }
             None => self.status_message = "Clipboard is empty".to_string(),
+        }
+    }
+
+    pub(super) fn start_rename(&mut self) {
+    self.rename_input = Path::new(&self.file_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("")
+        .to_string();
+
+    self.dialog = Dialog::Rename;
+    self.status_message = format!("Rename: {}", self.rename_input);
+}
+
+    pub (super) fn rename_file(&mut self) {
+        let new_name = self.rename_input.trim().to_string();
+        if new_name.is_empty() || new_name == "." || new_name == ".." || new_name.contains("/") || new_name.contains("\\") {
+            self.status_message = "Error: invalid filename".to_string();
+            return;
+        }
+
+        let old_path = Path::new(&self.file_path);
+        let new_path = old_path.with_file_name(&new_name);
+        if new_path == old_path {
+            self.dialog = Dialog::Nothing;
+            self.status_message = "Filename unchaned".to_string();
+            return;
+        }
+        if new_path.exists() {
+            self.status_message = "Error: file already exists".to_string();
+            return;
+        }
+
+        match fs::rename(old_path, &new_path) {
+            Ok(()) => {
+                self.file_path = new_path.to_string_lossy().into_owned();
+                self.dialog = Dialog::Nothing;
+                self.status_message = "File renamed successfully".to_string();
+            }
+            Err(e) => {
+                self.status_message = format!("Error renaming file: {}", e);
+            }
         }
     }
 

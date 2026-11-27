@@ -79,6 +79,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
         dialog: Dialog::Nothing,
         file_deleted: false,
         clipboard_line: None,
+        rename_input: String::new(),
     };
 
     let terminal_guard =
@@ -102,10 +103,27 @@ pub fn run(args: &[&str]) -> Result<(), String> {
 
             editor.status_message.clear();
             if editor.dialog != Dialog::Nothing {
-                let submited = key_event.code == KeyCode::Char('y');
-                if editor.manage_delete(submited) {
-                    break;
+                match editor.dialog {
+                    Dialog::ConfirmClose | Dialog::ConfirmDelete => {
+                        let submitted = key_event.code == KeyCode::Char('y');
+
+                        if submitted && editor.manage_delete(true) {
+                            break;
+                        }
+
+                        if matches!(key_event.code, KeyCode::Char('n') | KeyCode::Esc) {
+                            editor.dialog = Dialog::Nothing;
+                        }
+                    }
+
+                    Dialog::Rename => {
+                        editor.handle_rename_input(key_event.code);
+                    }
+
+                    Dialog::Nothing => {}
                 }
+
+                continue;
             }
 
             let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
@@ -127,6 +145,7 @@ pub fn run(args: &[&str]) -> Result<(), String> {
                 KeyCode::Char('l') if ctrl => editor.delete_row(),
                 KeyCode::Char('k') if ctrl => editor.cut_row(),
                 KeyCode::Char('u') if ctrl => editor.copy_fom_clipboard(),
+                KeyCode::Char('r') if ctrl => editor.start_rename(),
                 KeyCode::Left => editor.left(),
                 KeyCode::Right => editor.right(),
                 KeyCode::Up => editor.up(),
@@ -250,6 +269,10 @@ fn draw(editor: &Editor) {
             Print(" CTRL+U "),
             SetAttribute(Attribute::Reset),
             Print(" Paste line ")
+            SetAttribute(Attribute::Reverse),
+            Print(" CTRL+R "),
+            SetAttribute(Attribute::Reset),
+            Print(" Rename file ")
         )
         .unwrap();
     } else {

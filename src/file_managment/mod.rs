@@ -10,6 +10,7 @@ enum Dialog {
     Nothing,
     ConfirmClose,
     ConfirmDelete,
+    Rename,
 }
 
 struct Editor {
@@ -23,4 +24,5 @@ struct Editor {
     dialog: Dialog,
     file_deleted: bool,
     clipboard_line: Option<Vec<char>>,
+    rename_input: String,
 }
