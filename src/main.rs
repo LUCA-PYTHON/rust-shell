@@ -1,7 +1,5 @@
-use rust_shell::builtins;
-use rust_shell::file_managment;
-use rust_shell::parser::{Command, identify, parse_line};
-use rust_shell::state::{ShellState, expand};
+use rust_shell::state::ShellState;
+use rust_shell::{Flow, execute};
 
 use std::env;
 use std::io::{self, Write};
@@ -21,45 +19,12 @@ fn main() {
         print!("{} ", build_promt());
         out.flush().unwrap();
         let mut text = String::new();
-        let bytes = io::stdin().read_line(&mut text).unwrap();
-        if bytes == 0 {
+        if io::stdin().read_line(&mut text).unwrap() == 0 {
             break;
         }
 
-        let line = text.trim();
-        let parts = parse_line(line);
-        let expanded: Vec<String> = parts.iter().map(|w| expand(w, &state)).collect();
-        let refs: Vec<&str> = expanded.iter().map(|s| s.as_str()).collect();
-
-        match identify(&refs) {
-            Command::Exit => break,
-            Command::Empty => continue,
-            Command::Echo(args) => builtins::echo(args),
-            Command::Pwd => builtins::pwd(),
-            Command::Cd(args) => {
-                if let Err(e) = builtins::cd(args) {
-                    eprintln!("{}", e);
-                }
-            }
-            Command::Export(args) => {
-                if let Err(e) = builtins::export(args, &mut state) {
-                    eprintln!("{}", e);
-                }
-            }
-            Command::Env(args) => {
-                if let Err(e) = builtins::env_cmd(args, &state) {
-                    eprintln!("{}", e);
-                }
-            }
-            Command::Fm(args) => {
-                if let Err(e) = file_managment::run(args) {
-                    eprintln!("{}", e);
-                }
-            }
-            Command::Help => builtins::help(),
-            Command::Other(name, args) => {
-                println!("Command: {:?}\nArgs: {:?}", name, args)
-            }
+        if let Flow::Exit = execute(&text, &mut state, &mut out) {
+            break;
         }
     }
 }

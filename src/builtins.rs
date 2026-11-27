@@ -1,15 +1,20 @@
 use crate::state::ShellState;
 use std::env;
+use std::io::Write;
 
-pub fn echo(args: &[&str]) {
-    println!("{}", args.join(" "))
+type Res = Result<(), String>;
+
+fn io_err(e: std::io::Error) -> String {
+    e.to_string()
 }
 
-pub fn pwd() {
-    match env::current_dir() {
-        Ok(path) => println!("{}", path.display()),
-        Err(e) => eprintln!("error: {}", e),
-    }
+pub fn echo(args: &[&str], out: &mut impl Write) -> Res {
+    writeln!(out, "{}", args.join(" ")).map_err(io_err)
+}
+
+pub fn pwd(out: &mut impl Write) -> Res {
+    let path = env::current_dir().map_err(|e| format!("pwd: {}", e))?;
+    writeln!(out, "{}", path.display()).map_err(io_err)
 }
 
 pub fn cd(args: &[&str]) -> Result<(), String> {
@@ -35,32 +40,32 @@ pub fn export(args: &[&str], state: &mut ShellState) -> Result<(), String> {
     }
 }
 
-pub fn env_cmd(args: &[&str], state: &ShellState) -> Result<(), String> {
+pub fn env_cmd(args: &[&str], state: &ShellState, out: &mut impl Write) -> Res {
     match args.first() {
         Some(name) => match state.get(name) {
-            Some(value) => {
-                println!("{}={}", name, value);
-                Ok(())
-            }
+            Some(value) => writeln!(out, "{}={}", name, value).map_err(io_err),
             None => Err(format!("{}: not set", name)),
         },
         None => {
             for (name, value) in state.all() {
-                println!("{}={}", name, value);
+                writeln!(out, "{}={}", name, value).map_err(io_err)?;
             }
             Ok(())
         }
     }
 }
 
-pub fn help() {
-    println!("Info Menu for the rust-shell.");
-    println!("Befehle:");
-    println!("  -> echo <text>");
-    println!("  -> pwd");
-    println!("  -> cd <path>");
-    println!("  -> export <name>=<value>");
-    println!("  -> env <NAME>");
-    println!("  -> fm <path>");
-    println!("  -> help                         Hilfe Menu anzeigen");
+pub fn help(out: &mut impl Write) -> Res {
+    let text = "\
+Info Menu for the rust-shell.
+Befehle:
+  -> echo <text>
+  -> pwd
+  -> cd <path>
+  -> export <name>=<value>
+  -> env <NAME>
+  -> fm <path>
+  -> help                         Hilfe Menu anzeigen
+";
+    write!(out, "{}", text).map_err(io_err)
 }
