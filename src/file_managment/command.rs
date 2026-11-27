@@ -164,19 +164,24 @@ impl Editor {
     }
 
     pub(super) fn start_rename(&mut self) {
-    self.rename_input = Path::new(&self.file_path)
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("")
-        .to_string();
+        self.rename_input = Path::new(&self.file_path)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("")
+            .to_string();
 
-    self.dialog = Dialog::Rename;
-    self.status_message = format!("Rename: {}", self.rename_input);
-}
+        self.dialog = Dialog::Rename;
+        self.status_message = format!("Rename: {}", self.rename_input);
+    }
 
-    pub (super) fn rename_file(&mut self) {
+    pub(super) fn rename_file(&mut self) {
         let new_name = self.rename_input.trim().to_string();
-        if new_name.is_empty() || new_name == "." || new_name == ".." || new_name.contains("/") || new_name.contains("\\") {
+        if new_name.is_empty()
+            || new_name == "."
+            || new_name == ".."
+            || new_name.contains("/")
+            || new_name.contains("\\")
+        {
             self.status_message = "Error: invalid filename".to_string();
             return;
         }
