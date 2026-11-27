@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Rust Shell
+Comment=Eigene Shell in Rust
+Exec=rust-shell
+Icon=rust-shell
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupWMClass=rust-shell
