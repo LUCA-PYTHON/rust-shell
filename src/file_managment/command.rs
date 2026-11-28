@@ -6,6 +6,46 @@ use std::path::Path;
 
 use crossterm::event::{KeyCode, KeyModifiers};
 
+const RESERVED_NAMES: [&str; 22] = [
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+];
+
+fn validate_filename(name: &str) -> Result<(), String> {
+    if name.is_empty() {
+        return Err("name is empty".into());
+    }
+
+    if name == "." || name == ".." {
+        return Err("name not allowed".into());
+    }
+
+    if let Some(character) = name.chars().find(|character| {
+        character.is_control()
+            || matches!(
+                character,
+                '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*'
+            )
+    }) {
+        return Err(format!("invalid character '{}'", character));
+    }
+
+    if name.ends_with('.') || name.ends_with(' ') {
+        return Err("name must not end with '.' or space".into());
+    }
+
+    if name.len() > 255 {
+        return Err("name too long".into());
+    }
+
+    let stem = name.split('.').next().unwrap_or("").to_uppercase();
+    if RESERVED_NAMES.contains(&stem.as_str()) {
+        return Err(format!("'{}' is a reserved name", stem));
+    }
+
+    Ok(())
+}
+
 impl Editor {
     pub fn open(file_path: &str) -> Result<Editor, String> {
         let is_new_file = !Path::new(file_path).exists();
@@ -69,6 +109,14 @@ impl Editor {
                     if matches!(code, KeyCode::Char('n') | KeyCode::Esc) {
                         self.dialog = Dialog::Nothing;
                     }
+
+                    if self.status_message.is_empty() {
+                        self.status_message = match self.dialog {
+                            Dialog::ConfirmClose => "Close without saving? (y/n)".to_string(),
+                            Dialog::ConfirmDelete => "Delete file? (y/n)".to_string(),
+                            _ => String::new(),
+                        };
+                    }
                 }
 
                 Dialog::Rename => {
@@ -124,6 +172,7 @@ impl Editor {
                     true
                 }
                 Err(e) => {
+                    self.dialog = Dialog::Nothing;
                     self.status_message = format!("Error deleting: {}", e);
                     false
                 }
@@ -135,7 +184,10 @@ impl Editor {
 
     pub(super) fn handle_rename_input(&mut self, key: KeyCode) {
         match key {
-            KeyCode::Enter => self.rename_file(),
+            KeyCode::Enter => {
+                self.rename_file();
+                return;
+            }
 
             KeyCode::Esc => {
                 self.dialog = Dialog::Nothing;
@@ -284,13 +336,8 @@ impl Editor {
 
     pub(super) fn rename_file(&mut self) {
         let new_name = self.rename_input.trim().to_string();
-        if new_name.is_empty()
-            || new_name == "."
-            || new_name == ".."
-            || new_name.contains("/")
-            || new_name.contains("\\")
-        {
-            self.status_message = "Error: invalid filename".to_string();
+        if let Err(msg) = validate_filename(&new_name) {
+            self.status_message = format!("Error: {}", msg);
             return;
         }
 
@@ -298,11 +345,25 @@ impl Editor {
         let new_path = old_path.with_file_name(&new_name);
         if new_path == old_path {
             self.dialog = Dialog::Nothing;
-            self.status_message = "Filename unchaned".to_string();
+            self.status_message = "Filename unchanged".to_string();
             return;
         }
-        if new_path.exists() {
+
+        let old_name = old_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("");
+        let case_only = old_name.eq_ignore_ascii_case(&new_name) && old_name != new_name;
+
+        if new_path.exists() && !case_only {
             self.status_message = "Error: file already exists".to_string();
+            return;
+        }
+
+        if !old_path.exists() {
+            self.file_path = new_path.to_string_lossy().into_owned();
+            self.dialog = Dialog::Nothing;
+            self.status_message = "Filename changed (file not saved yet)".to_string();
             return;
         }
 
