@@ -50,7 +50,12 @@ impl Editor {
         }
     }
 
-    pub fn handle_key(&mut self, code: KeyCode, modifiers: KeyModifiers, visible_rows: usize) -> bool {
+    pub fn handle_key(
+        &mut self,
+        code: KeyCode,
+        modifiers: KeyModifiers,
+        visible_rows: usize,
+    ) -> bool {
         self.status_message.clear();
         if self.dialog != Dialog::Nothing {
             match self.dialog {

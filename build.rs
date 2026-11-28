@@ -5,6 +5,7 @@ fn main() {
         res.set_icon("assets/icon.ico");
         res.set("ProductName", "Rust Shell");
         res.set("FileDescription", "Rust Shell");
-        res.compile().expect("Windows-Icon konnte nicht eingebettet werden");
+        res.compile()
+            .expect("Windows-Icon konnte nicht eingebettet werden");
     }
 }

@@ -15,7 +15,7 @@ struct ShellApp {
     fm_rows: usize,
 }
 
-fn build_promt() -> String {
+fn build_prompt() -> String {
     match std::env::current_dir() {
         Ok(path) => format!("rust-shell: {}>", path.display()),
         Err(..) => String::from("rust-shell>"),
@@ -117,31 +117,33 @@ impl ShellApp {
     fn shell_ui(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
 
-        egui::Panel::bottom("input").show(ui, |ui| {
-            ui.horizontal(|ui| {
-                let prompt = build_promt();
-                ui.monospace(&prompt);
-                let response = ui.add(
-                    egui::TextEdit::singleline(&mut self.input)
-                        .font(egui::TextStyle::Monospace)
-                        .desired_width(f32::INFINITY),
-                );
-
-                if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                    self.run_input(&prompt, &ctx);
-                }
-                if self.fm.is_none() {
-                    response.request_focus();
-                }
-            });
-        });
-
         egui::CentralPanel::default().show(ui, |ui| {
             egui::ScrollArea::vertical()
                 .stick_to_bottom(true)
                 .auto_shrink([false; 2])
                 .show(ui, |ui| {
                     ui.label(egui::RichText::new(&self.output).monospace());
+
+                    ui.horizontal(|ui| {
+                        let prompt = build_prompt();
+                        ui.label(
+                            egui::RichText::new(&prompt)
+                                .monospace()
+                                .color(egui::Color32::from_rgb(120, 200, 120)),
+                        );
+
+                        let response = ui.add(
+                            egui::TextEdit::singleline(&mut self.input)
+                                .font(egui::TextStyle::Monospace)
+                                .frame(egui::Frame::NONE)
+                                .desired_width(f32::INFINITY),
+                        );
+
+                        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                            self.run_input(&prompt, &ctx);
+                        }
+                        response.request_focus();
+                    });
                 });
         });
     }
@@ -216,8 +218,8 @@ impl ShellApp {
                     }
                 });
             } else {
-                let is_error =
-                    editor.status_message.starts_with("Error") || editor.status_message.contains('?');
+                let is_error = editor.status_message.starts_with("Error")
+                    || editor.status_message.contains('?');
                 let color = if is_error {
                     Color32::from_rgb(139, 0, 0)
                 } else {
