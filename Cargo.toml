@@ -2,6 +2,7 @@
 name = "rust-shell"
 version = "0.1.0"
 edition = "2024"
+license = "Apache-2.0"
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"

@@ -78,5 +78,4 @@ Dateien direkt im Terminal verwalten.
 | `builtins_tests` | Testet alle Builtins: `echo`, `pwd`, `cd`, `export`, `env` und `is_empty`. |
 
 ## License
-
-Coming soon...
+Dieses Projekt steht unter der [Apache License 2.0](LICENSE).
