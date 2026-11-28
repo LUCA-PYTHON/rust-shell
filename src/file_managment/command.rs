@@ -4,9 +4,112 @@ use super::{Dialog, Editor};
 use std::fs;
 use std::path::Path;
 
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyModifiers};
 
 impl Editor {
+    pub fn open(file_path: &str) -> Result<Editor, String> {
+        let is_new_file = !Path::new(file_path).exists();
+        let file_content = if is_new_file {
+            String::new()
+        } else {
+            fs::read_to_string(file_path).map_err(|e| format!("fm: {} : {}", file_path, e))?
+        };
+
+        let mut lines: Vec<Vec<char>> = file_content
+            .lines()
+            .map(|line| line.replace('\t', "    ").chars().collect())
+            .collect();
+        if lines.is_empty() {
+            lines.push(Vec::new());
+        }
+
+        Ok(Editor {
+            file_path: file_path.to_string(),
+            lines,
+            cursor_col: 0,
+            cursor_row: 0,
+            scroll_row: 0,
+            modified: false,
+            status_message: if is_new_file {
+                "New File created".to_string()
+            } else {
+                String::new()
+            },
+            dialog: Dialog::Nothing,
+            file_deleted: false,
+            clipboard_line: None,
+            rename_input: String::new(),
+        })
+    }
+
+    pub fn scroll_to_cursor(&mut self, visible_rows: usize) {
+        if self.cursor_row < self.scroll_row {
+            self.scroll_row = self.cursor_row;
+        } else if self.cursor_row >= self.scroll_row + visible_rows {
+            self.scroll_row = self.cursor_row + 1 - visible_rows;
+        }
+    }
+
+    pub fn handle_key(&mut self, code: KeyCode, modifiers: KeyModifiers, visible_rows: usize) -> bool {
+        self.status_message.clear();
+        if self.dialog != Dialog::Nothing {
+            match self.dialog {
+                Dialog::ConfirmClose | Dialog::ConfirmDelete => {
+                    let submitted = code == KeyCode::Char('y');
+
+                    if submitted && self.manage_delete(true) {
+                        return true;
+                    }
+
+                    if matches!(code, KeyCode::Char('n') | KeyCode::Esc) {
+                        self.dialog = Dialog::Nothing;
+                    }
+                }
+
+                Dialog::Rename => {
+                    self.handle_rename_input(code);
+                }
+
+                Dialog::Nothing => {}
+            }
+
+            return false;
+        }
+
+        let ctrl = modifiers.contains(KeyModifiers::CONTROL);
+        let alt = modifiers.contains(KeyModifiers::ALT);
+
+        match code {
+            KeyCode::Char(c) if !ctrl || alt => self.insert_char(c),
+            KeyCode::Enter => self.insert_new_line(),
+            KeyCode::Tab => self.insert_tab(),
+            KeyCode::Backspace => self.backspace(),
+            KeyCode::Delete => self.delete_forward(),
+            KeyCode::Char('x') | KeyCode::Char('c') if ctrl => {
+                if self.close() {
+                    return true;
+                }
+            }
+            KeyCode::Char('s') if ctrl => self.save(),
+            KeyCode::Char('d') if ctrl => self.delete_file(),
+            KeyCode::Char('l') if ctrl => self.delete_row(),
+            KeyCode::Char('k') if ctrl => self.cut_row(),
+            KeyCode::Char('u') if ctrl => self.copy_fom_clipboard(),
+            KeyCode::Char('r') if ctrl => self.start_rename(),
+            KeyCode::Left => self.left(),
+            KeyCode::Right => self.right(),
+            KeyCode::Up => self.up(),
+            KeyCode::Down => self.down(),
+            KeyCode::Home => self.home(),
+            KeyCode::End => self.end(),
+            KeyCode::PageUp => self.page_up(visible_rows),
+            KeyCode::PageDown => self.page_down(visible_rows),
+            _ => {}
+        }
+        self.no_match();
+        false
+    }
+
     pub(super) fn manage_delete(&mut self, submited: bool) -> bool {
         match self.dialog {
             Dialog::ConfirmClose if submited => true,

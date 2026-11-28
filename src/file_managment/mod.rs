@@ -6,23 +6,23 @@ mod fm;
 pub use fm::run;
 
 #[derive(PartialEq)]
-enum Dialog {
+pub enum Dialog {
     Nothing,
     ConfirmClose,
     ConfirmDelete,
     Rename,
 }
 
-struct Editor {
-    file_path: String,
-    lines: Vec<Vec<char>>,
-    cursor_col: usize,
-    cursor_row: usize,
-    scroll_row: usize,
-    modified: bool,
-    status_message: String,
-    dialog: Dialog,
-    file_deleted: bool,
-    clipboard_line: Option<Vec<char>>,
-    rename_input: String,
+pub struct Editor {
+    pub file_path: String,
+    pub lines: Vec<Vec<char>>,
+    pub cursor_col: usize,
+    pub cursor_row: usize,
+    pub scroll_row: usize,
+    pub modified: bool,
+    pub status_message: String,
+    pub dialog: Dialog,
+    pub file_deleted: bool,
+    pub clipboard_line: Option<Vec<char>>,
+    pub rename_input: String,
 }
